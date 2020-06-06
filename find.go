@@ -31,8 +31,8 @@ type Finder struct {
 	filename string
 	comment  []byte
 	mode     ModeFind
-	Begin    int // Line begin position where the string was found (if any).
-	End      int // Line end position where the string was found (if any).
+	Begin    int64 // Line begin position where the string was found (if any).
+	End      int64 // Line end position where the string was found (if any).
 }
 
 // NewFinder prepares the Finder.
@@ -52,8 +52,13 @@ func NewFinder(filename, comment string, mode ModeFind) (*Finder, error) {
 	return fn, nil
 }
 
+// Filename returns the file name.
+func (fn *Finder) Filename() string {
+	return fn.filename
+}
+
 // Contains reports whether the file contains 'b'.
-func (fn Finder) Contains(b []byte) (found bool, err error) {
+func (fn *Finder) Contains(b []byte) (found bool, err error) {
 	f, err := os.Open(fn.filename)
 	if err != nil {
 		return false, err
@@ -73,15 +78,16 @@ func (fn Finder) Contains(b []byte) (found bool, err error) {
 				break
 			}
 			_line := bytes.TrimSpace(line)
-			if bytes.HasPrefix(_line, fn.comment) {
+			if len(_line) == 0 || bytes.HasPrefix(_line, fn.comment) {
+				fn.Begin += int64(len(line))
 				continue
 			}
 
 			if idx := bytes.Index(_line, b); idx != -1 {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else if fn.mode&ModSkipComment != 0 {
 		for {
@@ -90,14 +96,15 @@ func (fn Finder) Contains(b []byte) (found bool, err error) {
 				break
 			}
 			if bytes.HasPrefix(line, fn.comment) {
+				fn.Begin += int64(len(line))
 				continue
 			}
 
 			if idx := bytes.Index(line, b); idx != -1 {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else if fn.mode&ModTrimSpace != 0 {
 		for {
@@ -107,10 +114,10 @@ func (fn Finder) Contains(b []byte) (found bool, err error) {
 			}
 
 			if idx := bytes.Index(bytes.TrimSpace(line), b); idx != -1 {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else {
 		for {
@@ -120,10 +127,10 @@ func (fn Finder) Contains(b []byte) (found bool, err error) {
 			}
 
 			if idx := bytes.Index(line, b); idx != -1 {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	}
 
@@ -131,7 +138,7 @@ func (fn Finder) Contains(b []byte) (found bool, err error) {
 }
 
 // HasPrefix reports whether the file has a line that begins with 'b'.
-func (fn Finder) HasPrefix(b []byte) (found bool, err error) {
+func (fn *Finder) HasPrefix(b []byte) (found bool, err error) {
 	f, err := os.Open(fn.filename)
 	if err != nil {
 		return false, err
@@ -151,15 +158,16 @@ func (fn Finder) HasPrefix(b []byte) (found bool, err error) {
 				break
 			}
 			_line := bytes.TrimSpace(line)
-			if bytes.HasPrefix(_line, fn.comment) {
+			if len(_line) == 0 || bytes.HasPrefix(_line, fn.comment) {
+				fn.Begin += int64(len(line))
 				continue
 			}
 
 			if bytes.HasPrefix(_line, b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else if fn.mode&ModSkipComment != 0 {
 		for {
@@ -168,14 +176,15 @@ func (fn Finder) HasPrefix(b []byte) (found bool, err error) {
 				break
 			}
 			if bytes.HasPrefix(line, fn.comment) {
+				fn.Begin += int64(len(line))
 				continue
 			}
 
 			if bytes.HasPrefix(line, b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else if fn.mode&ModTrimSpace != 0 {
 		for {
@@ -185,10 +194,10 @@ func (fn Finder) HasPrefix(b []byte) (found bool, err error) {
 			}
 
 			if bytes.HasPrefix(bytes.TrimSpace(line), b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else {
 		for {
@@ -198,10 +207,10 @@ func (fn Finder) HasPrefix(b []byte) (found bool, err error) {
 			}
 
 			if bytes.HasPrefix(line, b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	}
 
@@ -209,7 +218,7 @@ func (fn Finder) HasPrefix(b []byte) (found bool, err error) {
 }
 
 // HasSuffix reports whether the file has a line that ends with 'b'.
-func (fn Finder) HasSuffix(b []byte) (found bool, err error) {
+func (fn *Finder) HasSuffix(b []byte) (found bool, err error) {
 	f, err := os.Open(fn.filename)
 	if err != nil {
 		return false, err
@@ -229,15 +238,16 @@ func (fn Finder) HasSuffix(b []byte) (found bool, err error) {
 				break
 			}
 			_line := bytes.TrimSpace(line)
-			if bytes.HasPrefix(_line, fn.comment) {
+			if len(_line) == 0 || bytes.HasPrefix(_line, fn.comment) {
+				fn.Begin += int64(len(line))
 				continue
 			}
 
 			if bytes.HasSuffix(_line, b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else if fn.mode&ModSkipComment != 0 {
 		for {
@@ -246,14 +256,15 @@ func (fn Finder) HasSuffix(b []byte) (found bool, err error) {
 				break
 			}
 			if bytes.HasPrefix(line, fn.comment) {
+				fn.Begin += int64(len(line))
 				continue
 			}
 
 			if bytes.HasSuffix(line, b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else if fn.mode&ModTrimSpace != 0 {
 		for {
@@ -263,10 +274,10 @@ func (fn Finder) HasSuffix(b []byte) (found bool, err error) {
 			}
 
 			if bytes.HasSuffix(bytes.TrimSpace(line), b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	} else {
 		for {
@@ -276,10 +287,10 @@ func (fn Finder) HasSuffix(b []byte) (found bool, err error) {
 			}
 
 			if bytes.HasSuffix(line, b) {
-				fn.End = fn.Begin + len(line)
+				fn.End = fn.Begin + int64(len(line))
 				return true, nil
 			}
-			fn.Begin += len(line)
+			fn.Begin += int64(len(line))
 		}
 	}
 

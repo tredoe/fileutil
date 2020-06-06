@@ -102,7 +102,7 @@ func OverwriteString(filename, s string) error {
 
 const (
 	suffixBackup = "+[1-9]~" // Suffix pattern added to backup's file name.
-	prefixTemp   = "test-"   // Prefix to add to temporary files.
+	prefixTemp   = "tmp-"    // Prefix to add to temporary files.
 )
 
 // Backup creates a backup of the named file.

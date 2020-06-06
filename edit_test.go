@@ -63,7 +63,7 @@ func TestEdit(t *testing.T) {
 		}
 	}()
 
-	// Append
+	// == Append
 	if err = ed.AppendString("\n" + line); err != nil {
 		t.Error(err)
 	} else {
@@ -77,7 +77,7 @@ func TestEdit(t *testing.T) {
 		}
 	}
 
-	/*// Insert
+	/*// == Insert
 	if err = ed.InsertString(line); err != nil {
 		t.Error(err)
 	} else {
@@ -91,7 +91,7 @@ func TestEdit(t *testing.T) {
 		}
 	}*/
 
-	// Replace
+	// == Replace
 	repl := []Replacer{
 		{"dolor", "DOL_"},
 		{"labor", "LABOR_"},
@@ -132,7 +132,7 @@ func TestEdit(t *testing.T) {
 		}
 	}
 
-	// ReplaceAtLine
+	// == ReplaceAtLine
 	replAt := []ReplacerAtLine{
 		{"LABOR", "o", "OO"},
 	}
@@ -183,7 +183,7 @@ func TestEdit(t *testing.T) {
 		}
 	}
 
-	// Comment
+	// == Comment
 	resul = "2\n"
 
 	if err = ed.Comment([]string{"night", "quis"}); err != nil {
@@ -199,7 +199,7 @@ func TestEdit(t *testing.T) {
 		}
 	}
 
-	// CommentOut
+	// == CommentOut
 	resul = "0\n"
 
 	if err = ed.CommentOut([]string{"night", "quis"}); err != nil {
@@ -218,5 +218,29 @@ func TestEdit(t *testing.T) {
 		if string(out) != resul {
 			t.Errorf("CommentOut => got %v, want %v", out, resul)
 		}
+	}
+
+	// == Delete
+	find, err := NewFinder(fileTemp, "", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := []byte("fugiat")
+
+	ok, err := find.HasPrefix(start)
+	if err != nil {
+		t.Fatal(err)
+	} else if !ok {
+		t.Errorf("HasPrefix: could not find %s", start)
+	}
+
+	if err = ed.Delete(find.Begin, find.End); err != nil {
+		t.Errorf("Delete => %s", err)
+	}
+
+	if ok, err = find.HasPrefix(start); err != nil {
+		t.Fatal(err)
+	} else if ok {
+		t.Errorf("HasPrefix: must not find %s", start)
 	}
 }

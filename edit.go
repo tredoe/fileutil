@@ -51,13 +51,16 @@ func NewEdit(filename string, conf *ConfEditer) (*Editer, error) {
 		return nil, err
 	}
 
-	ed := &Editer{
+	return &Editer{
 		file: file,
 		buf:  bufio.NewReadWriter(bufio.NewReader(file), bufio.NewWriter(file)),
 		conf: conf,
-	}
+	}, nil
+}
 
-	return ed, nil
+// Close closes the file.
+func (ed *Editer) Close() error {
+	return ed.file.Close()
 }
 
 // Append writes len(b) bytes at the end of the File. It returns an error, if any.
@@ -76,9 +79,37 @@ func (ed *Editer) AppendString(s string) error {
 	return ed.Append([]byte(s))
 }
 
-// Close closes the file.
-func (ed *Editer) Close() error {
-	return ed.file.Close()
+// Delete removes the text given at position 'begin:end'.
+func (ed *Editer) Delete(begin, end int64) error {
+	stat, err := ed.file.Stat()
+	if err != nil {
+		return err
+	}
+
+	if _, err = ed.file.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+	buf := new(bytes.Buffer)
+	fileData := make([]byte, begin)
+
+	if _, err = ed.file.Read(fileData); err != nil {
+		return err
+	}
+	buf.Write(fileData)
+
+	//fileData = fileData[:]
+	fileData = make([]byte, stat.Size()-(end-begin))
+
+	if _, err = ed.file.Seek(end, io.SeekStart); err != nil {
+		return err
+	}
+	if _, err = ed.file.Read(fileData); err != nil {
+		return err
+	}
+	buf.Write(fileData)
+	fileData = fileData[:]
+
+	return ed.rewrite(buf.Bytes())
 }
 
 // Comment inserts the comment character in lines that mach any regular expression in reLine.
@@ -98,7 +129,8 @@ func (ed *Editer) Comment(reLine []string) error {
 		allReSearch[i] = re
 	}
 
-	if _, err := ed.file.Seek(0, io.SeekStart); err != nil {
+	_, err := ed.file.Seek(0, io.SeekStart)
+	if err != nil {
 		return err
 	}
 
@@ -154,9 +186,7 @@ func (ed *Editer) CommentOut(reLine []string) error {
 
 	for i, v := range reLine {
 		allSearch[i] = ReplacerAtLine{
-			v,
-			"[[:space:]]*" + string(ed.conf.Comment) + "[[:space:]]*",
-			"",
+			v, "[[:space:]]*" + string(ed.conf.Comment) + "[[:space:]]*", "",
 		}
 	}
 
@@ -250,7 +280,8 @@ func (ed *Editer) genReplaceAtLine(r []ReplacerAtLine, n int) error {
 	if n == 0 {
 		return nil
 	}
-	if _, err := ed.file.Seek(0, io.SeekStart); err != nil {
+	_, err := ed.file.Seek(0, io.SeekStart)
+	if err != nil {
 		return err
 	}
 
@@ -314,7 +345,8 @@ func (ed *Editer) genReplaceAtLine(r []ReplacerAtLine, n int) error {
 }
 
 func (ed *Editer) rewrite(b []byte) error {
-	if _, err := ed.file.Seek(0, io.SeekStart); err != nil {
+	_, err := ed.file.Seek(0, io.SeekStart)
+	if err != nil {
 		return err
 	}
 
