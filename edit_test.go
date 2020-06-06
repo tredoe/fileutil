@@ -225,7 +225,7 @@ func TestEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	start := []byte("fugiat")
+	start := []byte("I've")
 
 	ok, err := find.HasPrefix(start)
 	if err != nil {
