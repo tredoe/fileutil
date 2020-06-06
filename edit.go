@@ -86,18 +86,9 @@ func (ed *Editer) Delete(begin, end int64) error {
 		return err
 	}
 
-	if _, err = ed.file.Seek(0, io.SeekStart); err != nil {
-		return err
-	}
 	buf := new(bytes.Buffer)
 
-	data := make([]byte, begin)
-	if _, err = ed.file.Read(data); err != nil {
-		return err
-	}
-	buf.Write(data)
-
-	data = make([]byte, stat.Size()-end)
+	data := make([]byte, stat.Size()-end)
 	if _, err = ed.file.Seek(end, io.SeekStart); err != nil && err != io.EOF {
 		return err
 	}
@@ -107,7 +98,15 @@ func (ed *Editer) Delete(begin, end int64) error {
 	buf.Write(data)
 	data = data[:]
 
-	return ed.rewrite(buf.Bytes())
+	if _, err = ed.file.Seek(begin, io.SeekStart); err != nil {
+		return err
+	}
+	if err = ed.file.Truncate(stat.Size() - (end - begin)); err != nil {
+		return err
+	}
+
+	_, err = ed.file.Write(buf.Bytes())
+	return err
 }
 
 // Comment inserts the comment character in lines that mach any regular expression in reLine.
