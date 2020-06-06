@@ -90,24 +90,22 @@ func (ed *Editer) Delete(begin, end int64) error {
 		return err
 	}
 	buf := new(bytes.Buffer)
-	fileData := make([]byte, begin)
 
-	if _, err = ed.file.Read(fileData); err != nil {
+	data := make([]byte, begin)
+	if _, err = ed.file.Read(data); err != nil {
 		return err
 	}
-	buf.Write(fileData)
+	buf.Write(data)
 
-	fileData = fileData[:]
-	fileData = make([]byte, stat.Size()-(end-begin))
-
+	data = make([]byte, stat.Size()-end)
 	if _, err = ed.file.Seek(end, io.SeekStart); err != nil && err != io.EOF {
 		return err
 	}
-	if _, err = ed.file.Read(fileData); err != nil && err != io.EOF {
+	if _, err = ed.file.Read(data); err != nil && err != io.EOF {
 		return err
 	}
-	buf.Write(fileData)
-	fileData = fileData[:]
+	buf.Write(data)
+	data = data[:]
 
 	return ed.rewrite(buf.Bytes())
 }
@@ -349,15 +347,13 @@ func (ed *Editer) rewrite(b []byte) error {
 	if err != nil {
 		return err
 	}
+	if err = ed.file.Truncate(int64(len(b))); err != nil {
+		return err
+	}
 
-	n, err := ed.file.Write(b)
-	if err != nil {
-		return err
-	}
-	if err = ed.file.Truncate(int64(n)); err != nil {
-		return err
-	}
-	return nil // ed.file.Sync()
+	_, err = ed.file.Write(b)
+	return err
+	//return ed.file.Sync()
 }
 
 // * * *

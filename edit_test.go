@@ -179,7 +179,7 @@ func TestEdit(t *testing.T) {
 		}
 
 		if out.String() != resul {
-			t.Errorf("ReplaceAtLineN => got %v, want %v", out, resul)
+			t.Errorf("ReplaceAtLineN => got %s, want %v", string(out.String()), resul)
 		}
 	}
 
@@ -226,6 +226,7 @@ func TestEdit(t *testing.T) {
 		t.Fatal(err)
 	}
 	start := []byte("I've")
+	//start := []byte("fugiat")
 
 	ok, err := find.HasPrefix(start)
 	if err != nil {
