@@ -383,6 +383,21 @@ func AppendString(filename string, mode ModeEdit, s string) error {
 	return Append(filename, mode, []byte(s))
 }
 
+// Delete removes the text given at position 'begin:end'.
+func Delete(filename string, begin, end int64) error {
+	ed, err := NewEdit(filename, &ConfEditer{Mode: ModBackup})
+	if err != nil {
+		return err
+	}
+
+	err = ed.Delete(begin, end)
+	err2 := ed.Close()
+	if err != nil {
+		return err
+	}
+	return err2
+}
+
 // Comment inserts the comment character in lines that mach the regular expression in reLine,
 // in the named file.
 func Comment(filename string, conf *ConfEditer, reLine string) error {
