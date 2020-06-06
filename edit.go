@@ -97,7 +97,7 @@ func (ed *Editer) Delete(begin, end int64) error {
 	}
 	buf.Write(fileData)
 
-	//fileData = fileData[:]
+	fileData = fileData[:]
 	fileData = make([]byte, stat.Size()-(end-begin))
 
 	if _, err = ed.file.Seek(end, io.SeekStart); err != nil && err != io.EOF {
