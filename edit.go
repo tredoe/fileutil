@@ -10,7 +10,6 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 )
@@ -241,7 +240,7 @@ func (ed *Editer) genReplace(r []Replacer, n int) error {
 		return err
 	}
 
-	content, err := ioutil.ReadAll(ed.buf)
+	content, err := io.ReadAll(ed.buf)
 	if err != nil {
 		return err
 	}

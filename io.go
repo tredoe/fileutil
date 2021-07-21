@@ -8,7 +8,6 @@ package fileutil
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -138,7 +137,7 @@ func CopytoTemp(source, prefix string) (tmpFile string, err error) {
 		}
 	}()
 
-	dest, err := ioutil.TempFile("", prefix)
+	dest, err := os.CreateTemp("", prefix)
 	if err != nil {
 		return "", err
 	}
