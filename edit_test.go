@@ -26,10 +26,12 @@ culpa qui officia deserunt mollit anim id est laborum.
 	}
 
 	cmd := exec.Command("wc", "-l", fileTemp)
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	out = bytes.TrimSpace(out)
 	if out[0] != '7' {
 		t.Fatalf("got %q lines, want 7", out[0])
 	}

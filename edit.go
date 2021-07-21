@@ -60,7 +60,12 @@ func NewEdit(filename string, conf *ConfEditer) (*Editer, error) {
 
 // Close closes the file.
 func (ed *Editer) Close() error {
-	return ed.file.Close()
+	if err := ed.file.Close(); err != nil {
+		return err
+	}
+
+	Log.Printf("File %q edited", ed.file.Name())
+	return nil
 }
 
 // Append writes len(b) bytes at the end of the File. It returns an error, if any.
@@ -164,12 +169,12 @@ func (ed *Editer) Comment(reLine []string) error {
 	return nil
 }
 
-// Replacer repreents the text to be replaced.
+// Replacer represents the text to be replaced.
 type Replacer struct {
 	Search, Replace string
 }
 
-// ReplacerAtLine repreents the text to be replaced into a line.
+// ReplacerAtLine represents the text to be replaced into a line.
 type ReplacerAtLine struct {
 	Line, Search, Replace string
 }

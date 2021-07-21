@@ -7,17 +7,16 @@
 package fileutil
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 )
 
-// Copy copies file in source to file in dest preserving the mode attributes.
+// Copy copies file from 'source' to file in 'dest' preserving the mode attributes.
+// It makes a backup if the global variable 'DoBackup' is set to true.
 func Copy(source, dest string) (err error) {
 	// Don't backup files of backup.
-	if dest[len(dest)-1] != '~' {
+	if DoBackup && dest[len(dest)-1] != '~' {
 		if err = Backup(dest); err != nil {
 			return
 		}
@@ -48,7 +47,12 @@ func Copy(source, dest string) (err error) {
 	if err2 != nil && err == nil {
 		err = err2
 	}
-	return
+	if err != nil {
+		return err
+	}
+
+	Log.Printf("File %q copied at %q", source, dest)
+	return nil
 }
 
 // Create creates a new file with b bytes.
@@ -63,7 +67,12 @@ func Create(filename string, b []byte) (err error) {
 	if err2 != nil && err == nil {
 		err = err2
 	}
-	return
+	if err != nil {
+		return err
+	}
+
+	Log.Printf("File %q created", filename)
+	return nil
 }
 
 // CreateString is like Create, but writes the contents of string s rather than
@@ -72,11 +81,14 @@ func CreateString(filename, s string) error {
 	return Create(filename, []byte(s))
 }
 
-// Overwrite truncates the named file to zero and writes len(b) bytes. It
-// returns an error, if any.
+// Overwrite truncates the named file to zero and writes len(b) bytes.
+// It makes a backup if the global variable 'DoBackup' is set to true.
+// It returns an error, if any.
 func Overwrite(filename string, b []byte) (err error) {
-	if err := Backup(filename); err != nil {
-		return err
+	if DoBackup {
+		if err = Backup(filename); err != nil {
+			return err
+		}
 	}
 
 	file, err := os.Create(filename)
@@ -89,7 +101,12 @@ func Overwrite(filename string, b []byte) (err error) {
 	if err2 != nil && err == nil {
 		err = err2
 	}
-	return
+	if err != nil {
+		return err
+	}
+
+	Log.Printf("File %q overwritted", filename)
+	return nil
 }
 
 // OverwriteString is like Overwrite, but writes the contents of string s rather
@@ -100,52 +117,7 @@ func OverwriteString(filename, s string) error {
 
 // == Utility
 
-const (
-	suffixBackup = "+[1-9]~" // Suffix pattern added to backup's file name.
-	prefixTemp   = "tmp-"    // Prefix to add to temporary files.
-)
-
-// Backup creates a backup of the named file.
-//
-// The schema used for the new name is: {name}\+[1-9]~
-//   name: The original file name.
-//   + : Character used to separate the file name from rest.
-//   number: A number from 1 to 9, using rotation.
-//   ~ : To indicate that it is a backup, just like it is used in Unix systems.
-func Backup(filename string) error {
-	// Check if it is empty
-	info, err := os.Stat(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	if info.Size() == 0 {
-		return nil
-	}
-
-	files, err := filepath.Glob(filename + suffixBackup)
-	if err != nil {
-		return err
-	}
-
-	// Number rotation
-	numBackup := byte(1)
-
-	if len(files) != 0 {
-		lastFile := files[len(files)-1]
-		numBackup = lastFile[len(lastFile)-2] + 1 // next number
-
-		if numBackup > '9' {
-			numBackup = '1'
-		}
-	} else {
-		numBackup = '1'
-	}
-
-	return Copy(filename, fmt.Sprintf("%s+%s~", filename, string(numBackup)))
-}
+const prefixTemp = "tmp-" // Prefix to add to temporary files.
 
 // CopytoTemp creates a temporary file from the source file into the default
 // directory for temporary files (see os.TempDir), whose name begins with prefix.
@@ -179,5 +151,7 @@ func CopytoTemp(source, prefix string) (tmpFile string, err error) {
 	if _, err = io.Copy(dest, src); err != nil {
 		return "", err
 	}
+
+	Log.Printf("File %q copied at %q", source, dest.Name())
 	return dest.Name(), nil
 }

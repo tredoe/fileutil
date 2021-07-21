@@ -15,3 +15,7 @@ var (
 	fileTemp   = filepath.Join(os.TempDir(), "test-file.txt")
 	fileBackup = fileTemp + "+1~"
 )
+
+func init() {
+	//SetupLogger(log.New(os.Stdout, "[INFO] ", 0))
+}
