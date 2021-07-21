@@ -12,7 +12,7 @@ import (
 )
 
 // Logger is the global logger.
-// By default, it does not logs. Use 'SetupLogger' to logging.
+// By default, it does not write logs. Use 'SetupLogger' to logging.
 var Log *log.Logger = log.New(io.Discard, "", -1)
 
 // SetupLogger setups a logger to be used by the package.
