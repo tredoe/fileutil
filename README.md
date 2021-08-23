@@ -7,6 +7,8 @@ Package fileutil handles common operations at files.
 
 ## Warning
 
+This repository will become read-only.
+
 The next versions and changes of 'github.com/tredoe/fileutil' are integrated at 'github.com/tredoe/osutil'.
 
 
